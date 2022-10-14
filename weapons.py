@@ -142,7 +142,7 @@ def whip():
     return damage
 
 
-# Martial ranged weapons
+# Martial ranged weapons - net, no damage so it's useless atm
 
 def blowgun():
     damage = 1

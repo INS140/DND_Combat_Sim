@@ -18,12 +18,17 @@ class Combatant:
         self.prof = 2
         self.weapon = 'dagger'
         self.atk_message = 'Roll a d20'
-        self.spellmessage = ''
+        self.spell_message = ''
+        self.action = 1
+        self.subtle_action = 1
+        self.attack_number = 1
+        self.speed = 30
+        self.bonus_action = 1
 
     def roll_initiative(self):
         self.initiative = gf.roll_dice(1, 20) + self.DEXmod
 
-    def reference(self):
+    def reference(self):    # Redefine for spellcasters and players
         print(f'''Player reference:
     Name: {self.name}   HP: {self.hp}   AC: {self.ac}
 
@@ -36,7 +41,7 @@ class Combatant:
     def command(self):
         self.com = input(f"{self.name}, type a command > ").lower()
 
-    def attack(self, target):
+    def attack(self, target):   # Redefined for spellcasters
         print(f'{self.name} attacks {target.name}!')
         attack_attempt = False
         atk = 0
@@ -66,13 +71,20 @@ class Combatant:
         weapon_set = False
         while weapon_set is False:
             if new_weapon in weapons.list_of_weapons:
+                print(f'{self.name} equipped a {new_weapon}!')
                 self.weapon = new_weapon
                 weapon_set = True
+            elif new_weapon == 'remove':
+                print(f'{self.name} dropped their weapon!')
+                self.weapon = 'none'
+                weapon_set = True
+            elif new_weapon == 'cancel':
+                break
             else:
                 print('Invalid weapon')
                 new_weapon = input("Equip a new weapon > ").lower()
 
-    def damage(self):
+    def damage(self):   # Needs to be redefined if combatant does not weild a weapon
         dmg = gf.collect_weapon_damage(self.weapon)
         return dmg
 
@@ -90,11 +102,11 @@ class Spellcaster(Combatant):
                 dmg = self.damage() + self.DEXmod
                 m_or_s_attempt = True
             elif melee_or_spell == 'spell':
-                dmg = self.spelldamage()
+                dmg = self.cast_spell()
                 if dmg == 'cancel':
                     melee_or_spell = input('Melee or spell attack > ')
                 else:
-                    print(f'{self.name} attacks {target.name} with {self.spellmessage}!')
+                    print(f'{self.name} attacks {target.name} with {self.spell_message}!')
                     atk = int(input(f'{self.atk_message} > ')) + self.INTmod + self.prof
                     m_or_s_attempt = True
             else:
@@ -118,7 +130,7 @@ class Spellcaster(Combatant):
         STR: {self.STRmod}  DEX: {self.DEXmod}  INT: {self.INTmod}
     Initiative: {self.initiative}''')
 
-    def spelldamage(self):
+    def cast_spell(self):
         dmg = gf.spell_select(self)
         return dmg
 

@@ -1,5 +1,11 @@
 import random, Monster_SB, spells, weapons
 
+# Important game lists
+
+actions = ['atk', 'def', 'run']
+subtle_actions = ['equip']
+
+
 # General dice roller
 
 def roll_dice(num_dice, d_value):
