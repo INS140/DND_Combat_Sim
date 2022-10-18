@@ -1,13 +1,15 @@
-import Monster_SB
+from Monster_SB import Spellcaster
+import game_functions as gf
+from spells import Attack_spell
 
 # To shorten variable size, p = player
 
 # This section decides how many players there are and their attributes
-p_list_creation = False
-while p_list_creation is False:
+p_list_range_create = False
+while p_list_range_create is False:
     try:
         number_of_p = int(input('How many players? > '))
-        p_list_creation = True
+        p_list_range_create = True
     except ValueError:
         print('Invalid input')
 
@@ -15,45 +17,17 @@ print(' ')
 range_of_p = range(0, number_of_p)
 p_list = []
 for p_number in range_of_p:
-    p_list += [f'{p_number}']
-    monster_type = input('Player type > ').lower()
-    p_creation_attempt = False
-    while p_creation_attempt is False:
-        if monster_type == 'player':
-            p_list[p_number] = Monster_SB.Player()
-            p_list[p_number].set_stats(input('Name > '), int(input('HP > ')), int(input('AC > ')))
-            p_creation_attempt = True
-        elif monster_type == 'gnoll':
-            p_list[p_number] = Monster_SB.Gnoll()
-            p_list[p_number].set_stats(input('Name > '))
-            p_creation_attempt = True
-        elif monster_type == 'skeleton':
-            p_list[p_number] = Monster_SB.Skeleton()
-            p_list[p_number].set_stats(input('Name > '))
-            p_creation_attempt = True
-        elif monster_type == 'zombie':
-            p_list[p_number] = Monster_SB.Zombie()
-            p_list[p_number].set_stats(input('Name > '))
-            p_creation_attempt = True
-        else:
-            print('''
-Invalid monster type
-            ''')
-            monster_type = input('Monster type > ').lower()
-    print(' ')
-
-# This section is to determine initiative
-for player in p_list:
-    player.roll_initiative()
-    p_list.sort(key=lambda p: p.initiative, reverse=True)
+    p_list.append(p_number)
+    gf.create_player(p_list, p_number)
+p_list.sort(key=lambda p: p.initiative, reverse=True)
 
 # This creates reference lists for in game use
 p_list_reference_init = []
 for player in p_list:
-    p_list_reference_init += [player.initiative]
+    p_list_reference_init.append(player.initiative)
 p_list_reference_name = []
 for player in p_list:
-    p_list_reference_name += [player.name]
+    p_list_reference_name.append(player.name)
 
 # Intro
 print('''
@@ -81,77 +55,105 @@ Player Name: {p_list_reference_name}
 
 Round {round_num}''')
     print('-' * 100)
-
     for player in p_list:
         if player.hp > 0 and player.run is False:
             player.reference()
             turn_finished = False
             player.temp_ac = 0
+            action = player.action
+            subtle_action = player.subtle_action
             print(' ')
             player.command()
             while turn_finished is False:
-                if player.com == 'atk':
-                    target = input('target > ')
-                    attack_attempt = False
-                    while attack_attempt is False:
-                        for p_number in range_of_p:
-                            try:
-                                if target == p_list[p_number].name and p_list[p_number].run is False:
-                                    player.attack(p_list[p_number])
-                                    if p_list[p_number].hp <= 0:
-                                        print(f'{p_list[p_number].name} is dead')
-
-                                        number_of_p -= 1
-                                    attack_attempt = True
-                                    target = 0
-                                else:
-                                    pass
-                            except IndexError:
+                if player.com in gf.actions:
+                    if action != 0:
+                        if player.com == 'atk':
+                            target = gf.select_target(range_of_p, p_list)
+                            if target in p_list:
+                                player.attack(target)
+                                action -= 1
+                                if target.hp < 1:
+                                    print(f'{target.name} is dead')
+                                    number_of_p -= 1
+                            elif target == 'cancel':
                                 pass
-                        if target == 'help':
-                            print('''Type a combatants name to target it
-Names can be found in "Player Names" list at beginning of Round''')
-                            target = input('target > ')
-                        elif target == 'cancel':
                             player.command()
-                            break
-                        elif target == 0:
-                            pass
-                        else:
-                            print('''Invalid target
-Type "help" for options''')
-                            target = input('target > ')
-                    if attack_attempt is False:
-                        pass
-                    elif attack_attempt is True:
+                        elif player.com == 'def':
+                            player.defend()
+                            action -= 1
+                            player.command()
+                        elif player.com == 'run':
+                            print(f'{player.name} chickened out ...')
+                            player.run = True
+                            number_of_p -= 1
+                            turn_finished = True
+                            print('-' * 100)
+                        elif isinstance(player, Spellcaster) is True and player.com == 'cast':
+                            spell = player.cast_spell()
+                            if spell == 'cancel':
+                                pass
+                            else:
+                                if isinstance(spell, Attack_spell):
+                                    target = gf.select_target(range_of_p, p_list)
+                                    if target in p_list:
+                                        print(f'{player.name} attacks {target.name} with {spell.name}!')
+                                        attack_attempt = False
+                                        while attack_attempt is False:
+                                            try:
+                                                atk = int(input(f'{player.atk_message} > ')) + player.casting_mod
+                                                attack_attempt = True
+                                            except ValueError:
+                                                print('Invalid input')
+                                        spell.spell_effect(player, atk, target)
+                                        action -= 1
+                                        if target.hp < 1:
+                                            print(f'{target.name} is dead')
+                                            number_of_p -= 1
+                                    elif target == 'cancel':
+                                        pass
+                                else:
+                                    print("You're spell doesn't do damage")
+                            player.command()
+                        elif isinstance(player, Spellcaster) is not True and player.com == 'cast':
+                            print("You can't cast spells")
+                            player.command()
+                    else:
+                        print("You have no more actions")
+                        player.command()
+                elif player.com in gf.subtle_actions:
+                    if subtle_action != 0:
+                        if player.com == 'equip':
+                            weapon = player.weapon
+                            player.equip_weapon()
+                            if weapon != player.weapon:
+                                subtle_action -= 1
+                            else:
+                                pass
+                            print(' ')
+                            player.command()
+                    else:
+                        print("You can't do that")
+                        player.command()
+                else:
+                    if player.com == 'help':
+                        print('''Combat Options:
+    atk - attack a target
+    cast - cast a spell
+    def - temporarily raise AC
+    run - forfeit
+    end - end turn
+Player Options:
+    equip - change weapon
+                        ''')
+                        player.command()
+                    elif player.com == 'end':
                         turn_finished = True
                         print('-' * 100)
-                elif player.com == 'def':
-                    player.defend()
-                    turn_finished = True
-                    print('-' * 100)
-                elif player.com == 'run':
-                    print(f'{player.name} chickened out ...')
-                    player.run = True
-                    number_of_p -= 1
-                    turn_finished = True
-                    print('-' * 100)
-                elif player.com == 'help':
-                    print('''Options:
-    atk - attack a target
-    def - temporarily raise AC
-    pass - pass turn
-    run - forfeit
-                    ''')
-                    player.command()
-                elif player.com == 'pass':
-                    turn_finished = True
-                    print('-' * 100)
-                else:
-                    print('''Invalid input"
-Type "help" for options
-                    ''')
-                    player.command()
+                    else:
+                        print('''Invalid input"
+    Type "help" for options
+                        ''')
+                        player.command()
 
         if number_of_p <= 1:
             break

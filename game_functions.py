@@ -1,10 +1,9 @@
 import random, Monster_SB, spells, weapons
 
-# Important game lists
+# Important game arrays
 
-actions = ['atk', 'def', 'run']
+actions = ['atk', 'cast', 'def', 'run']
 subtle_actions = ['equip']
-
 
 # General dice roller
 
@@ -50,107 +49,35 @@ Invalid monster type
     print(' ')
 
 
-# Weapon selection and damage output
+# Targetting functions
 
-def collect_weapon_damage(weapon):
-    if weapon == 'club':
-        dmg = weapons.club()
-    elif weapon == 'dagger':
-        dmg = weapons.dagger()
-    elif weapon == 'greatclub':
-        dmg = weapons.greatclub()
-    elif weapon == 'handaxe':
-        dmg = weapons.handaxe()
-    elif weapon == 'javelin':
-        dmg = weapons.javelin()
-    elif weapon == 'light hammer':
-        dmg = weapons.light_hammer()
-    elif weapon == 'mace':
-        dmg = weapons.mace()
-    elif weapon == 'quarterstaff':
-        dmg = weapons.quarterstaff()
-    elif weapon == 'sickle':
-        dmg = weapons.sickle()
-    elif weapon == 'spear':
-        dmg = weapons.spear()
-    elif weapon == 'light crossbow':
-        dmg = weapons.crossbow_light()
-    elif weapon == 'dart':
-        dmg = weapons.dart()
-    elif weapon == 'shortbow':
-        dmg = weapons.shortbow()
-    elif weapon == 'sling':
-        dmg = weapons.sling()
-    elif weapon == 'battleaxe':
-        dmg = weapons.battleaxe()
-    elif weapon == 'flail':
-        dmg = weapons.flail()
-    elif weapon == 'glaive':
-        dmg = weapons.glaive()
-    elif weapon == 'greataxe':
-        dmg = weapons.greataxe()
-    elif weapon == 'greatsword':
-        dmg = weapons.greatsword()
-    elif weapon == 'halberd':
-        dmg = weapons.halberd()
-    elif weapon == 'lance':
-        dmg = weapons.lance()
-    elif weapon == 'longsword':
-        dmg = weapons.longsword()
-    elif weapon == 'maul':
-        dmg = weapons.maul()
-    elif weapon == 'morningstar':
-        dmg = weapons.morningstar()
-    elif weapon == 'pike':
-        dmg = weapons.pike()
-    elif weapon == 'rapier':
-        dmg = weapons.rapier()
-    elif weapon == 'scimitar':
-        dmg = weapons.scimitar()
-    elif weapon == 'shortsword':
-        dmg = weapons.shortsword()
-    elif weapon == 'trident':
-        dmg = weapons.trident()
-    elif weapon == 'war pick':
-        dmg = weapons.war_pick()
-    elif weapon == 'warhammer':
-        dmg = weapons.warhammer()
-    elif weapon == 'whip':
-        dmg = weapons.whip()
-    elif weapon == 'blowgun':
-        dmg = weapons.blowgun()
-    elif weapon == 'hand crossbow':
-        dmg = weapons.crossbow_hand()
-    elif weapon == 'heavy crossbow':
-        dmg = weapons.crossbow_heavy()
-    elif weapon == 'longbow':
-        dmg = weapons.longbow()
-    else:
-        dmg = 0
-    return dmg
-
-
-# Spell selection for spellcasters
-
-# Determines if user can cast the given spell
-def spell_select(user):
-    spell = input('Which spell would you like to use > ').lower()
-    cast_attempt = False
-    while cast_attempt is False:
-        if spell == 'cancel':
-            dmg = 'cancel'
-            cast_attempt = True
-        else:
-            if spell in user.spelloptions:
-                dmg = collect_spell_damage(user, spell)
-                if dmg == 'invalid':
-                    spell = input('Which spell would you like to use > ').lower()
+def select_target(range_of_p, p_list):
+    target = input('target > ')
+    select_attempt = False
+    while select_attempt is False:
+        for p_number in range_of_p:
+            try:
+                if target == p_list[p_number].name and p_list[p_number].run is False:
+                   target = p_list[p_number]
                 else:
-                    cast_attempt = True
-            else:
-                print("You can't cast that spell")
-                spell = input('Which spell would you like to use > ').lower()
-    return dmg
+                    pass
+            except IndexError:
+                pass
+        if target in p_list:
+            select_attempt = True
+            break
+        elif target == 'help':
+            print('''Type a combatants name to target it
+Names can be found in "Player Names" list at beginning of Round''')
+            target = input('target > ')
+        elif target == 'cancel':
+            break
+        else:
+            print('''Invalid target
+Type "help" for options''')
+            target = input('target > ')
+    return target
+
 
 # Collects the spell and determines damage
 def collect_spell_damage(user, spell):

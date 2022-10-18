@@ -1,9 +1,12 @@
+from Monster_SB import Spellcaster
 import game_functions as gf
+from spells import Attack_spell
 
 # To shorten variable size, p = player
 
 # Things left to add:
-#   add spellcasting action
+#   timer that keeps track of in combat time
+#   upgrade spellcasting action
 #   combat spells
 #   spell descriptions
 #   conditions
@@ -20,6 +23,7 @@ import game_functions as gf
 #   healing
 #   movement counter???
 #   noncombat spells
+#   passive spell and AoE effects
 #   damage types
 #   resistance/immunity
 #   player stat blocks
@@ -48,11 +52,7 @@ p_list = []
 for p_number in range_of_p:
     p_list.append(p_number)
     gf.create_player(p_list, p_number)
-
-# This section is to determine initiative
-for player in p_list:
-    player.roll_initiative()
-    p_list.sort(key=lambda p: p.initiative, reverse=True)
+p_list.sort(key=lambda p: p.initiative, reverse=True)
 
 # This creates reference lists for in game use
 p_list_reference_init = []
@@ -101,40 +101,16 @@ Round {round_num}''')
                 if player.com in gf.actions:
                     if action != 0:
                         if player.com == 'atk':
-                            target = input('target > ')
-                            attack_attempt = False
-                            while attack_attempt is False:
-                                for p_number in range_of_p:
-                                    try:
-                                        if target == p_list[p_number].name and p_list[p_number].run is False:
-                                            player.attack(p_list[p_number])
-                                            if p_list[p_number].hp <= 0:
-                                                print(f'{p_list[p_number].name} is dead')
-                                                number_of_p -= 1
-                                            attack_attempt = True
-                                            action -= 1
-                                            target = 0
-                                        else:
-                                            pass
-                                    except IndexError:
-                                        pass
-                                if target == 'help':
-                                    print('''Type a combatants name to target it
-Names can be found in "Player Names" list at beginning of Round''')
-                                    target = input('target > ')
-                                elif target == 'cancel':
-                                    player.command()
-                                    break
-                                elif target == 0:
-                                    pass
-                                else:
-                                    print('''Invalid target
-Type "help" for options''')
-                                    target = input('target > ')
-                            if attack_attempt is False:
+                            target = gf.select_target(range_of_p, p_list)
+                            if target in p_list:
+                                player.attack(target)
+                                action -= 1
+                                if target.hp < 1:
+                                    print(f'{target.name} is dead')
+                                    number_of_p -= 1
+                            elif target == 'cancel':
                                 pass
-                            elif attack_attempt is True:
-                                player.command()
+                            player.command()
                         elif player.com == 'def':
                             player.defend()
                             action -= 1
@@ -145,6 +121,35 @@ Type "help" for options''')
                             number_of_p -= 1
                             turn_finished = True
                             print('-' * 100)
+                        elif isinstance(player, Spellcaster) is True and player.com == 'cast':
+                            spell = player.cast_spell()
+                            if spell == 'cancel':
+                                pass
+                            else:
+                                if isinstance(spell, Attack_spell):
+                                    target = gf.select_target(range_of_p, p_list)
+                                    if target in p_list:
+                                        print(f'{player.name} attacks {target.name} with {spell.name}!')
+                                        attack_attempt = False
+                                        while attack_attempt is False:
+                                            try:
+                                                atk = int(input(f'{player.atk_message} > ')) + player.casting_mod
+                                                attack_attempt = True
+                                            except ValueError:
+                                                print('Invalid input')
+                                        spell.spell_effect(player, atk, target)
+                                        action -= 1
+                                        if target.hp < 1:
+                                            print(f'{target.name} is dead')
+                                            number_of_p -= 1
+                                    elif target == 'cancel':
+                                        pass
+                                else:
+                                    print("You're spell doesn't do damage")
+                            player.command()
+                        elif isinstance(player, Spellcaster) is not True and player.com == 'cast':
+                            print("You can't cast spells")
+                            player.command()
                     else:
                         print("You have no more actions")
                         player.command()
@@ -166,6 +171,7 @@ Type "help" for options''')
                     if player.com == 'help':
                         print('''Combat Options:
     atk - attack a target
+    cast - cast a spell
     def - temporarily raise AC
     run - forfeit
     end - end turn
