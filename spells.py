@@ -4,7 +4,8 @@ import game_functions as gf
 
 class Spell:
     def __init__(self):
-        self.spell_name = ''
+        self.name = ''
+        self.reference = ''
         self.type = ''
         self.level = 0
         self.casting_time = ''
@@ -20,18 +21,31 @@ class Spell:
 class Attack_spell(Spell):
     def __init__(self):
         super().__init__()
+        self.targeting = '' #single or multi
+        self.roll_type = '' #attack or save
+        self.save_type = '' #Only if roll_type is save: STR, DEX, CON, INT, WIS, CHA
         self.num_die = 1
         self.d_value = 6
         self.dmg_type = ''
 
-    def spell_effect(self, user, atk, target):
-        if atk >= target.ac and atk >= target.temp_ac:
-            dmg = self.spell_damage()
-            print(f'{target.name} takes {dmg} {self.dmg_type} damage')
-            target.hp -= dmg
-            print("Ouch!")
-        else:
-            print(f'{user.name} missed')
+    def spell_effect(self, user, value, target):
+        if self.roll_type == 'attack':
+            if value >= target.ac and value >= target.temp_ac:
+                dmg = self.spell_damage()
+                print(f'{target.name} takes {dmg} {self.dmg_type} damage')
+                target.hp -= dmg
+                print("Ouch!")
+            else:
+                print(f'{user.name} missed')
+        if self.roll_type == 'save':
+            if value < user.spell_save_dc:
+                dmg = self.spell_damage()
+                print(f'{target.name} takes {dmg} {self.dmg_type} damage')
+                target.hp -= dmg
+                print("Ouch!")
+            else:
+                print(f'{user.name} missed')
+
 
     def spell_damage(self):
         dmg = gf.roll_dice(self.num_die, self.d_value)
@@ -54,6 +68,9 @@ class Acid_splash(Cantrip, Attack_spell):
         self.range = 60
         self.components = 'V, S'
         self.dmg_type = 'acid'
+        self.targeting = 'multi'
+        self.roll_type = 'save'
+        self.save_type = 'DEX'
         self.description = '''
 You hurl a bubble of acid. Choose one or two creatures you can see within
 range. If you choose two, they must be within 5 feet of each other. A target
@@ -64,10 +81,33 @@ level (3d6), and 17th level (4d6).
         '''
 
 
-def chill_touch(user):
-    dmg = gf.roll_dice(1, 8)
-    user.spell_message = 'Chill Touch'
-    return dmg
+class Chill_touch(Cantrip, Attack_spell):
+    def __init__(self):
+        super().__init__()
+        self.name = 'Chill Touch'
+        self.reference = 'chill touch'
+        self.type = 'Necromancy'
+        self.casting_time = '1 action'
+        self.range = 120
+        self.components = 'V, S'
+        self.dmg_type = 'necrotic'
+        self.d_value = 8
+        self.targeting = 'single'
+        self.roll_type = 'attack'
+        self.description = '''
+You create a ghostly, skeletal hand in the space of a creature within range.
+Make a ranged spell attack against the creature to assail it with the chill
+of the grave. On a hit, the target takes 1d8 necrotic damage, and it can't
+regain hit points until the start of your next turn. Until then, the hand
+clings to the target.
+
+If you hit an undead target, it also has disadvantage on attack rolls
+against you until the end of your next turn.
+
+This spell's damage increases by 1d8 when you reach 5th level (2d8), 11th
+level (3d8), and 17th level (4d8).
+        '''
+
 
 def eldritch_blast(user):
     dmg = gf.roll_dice(1, 10)
@@ -158,4 +198,4 @@ def lightning(user):
 
 # Spell lists
 
-spell_list_as_objects = [Acid_splash()]
+spell_list_as_objects = [Acid_splash(), Chill_touch()]

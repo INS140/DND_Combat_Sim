@@ -1,6 +1,4 @@
-from Monster_SB import Spellcaster
-import game_functions as gf
-from spells import Attack_spell
+import game_functions as gf,Monster_SB as msb, spells as spl
 
 # To shorten variable size, p = player
 
@@ -8,6 +6,7 @@ from spells import Attack_spell
 #   timer that keeps track of in combat time
 #   upgrade spellcasting action
 #   combat spells
+#   multitargeting
 #   spell descriptions
 #   conditions
 #   bonus action
@@ -31,7 +30,7 @@ from spells import Attack_spell
 #   player/monster inventory
 #   class specifics (spell lists, weapon prof, etc)
 #   proficiency bonuses
-#   saving throws
+#   saving throws ------ maybe finished, needs more testing
 #   player specific actions
 #   party/teams
 #   django framework
@@ -121,24 +120,29 @@ Round {round_num}''')
                             number_of_p -= 1
                             turn_finished = True
                             print('-' * 100)
-                        elif isinstance(player, Spellcaster) is True and player.com == 'cast':
+                        elif isinstance(player, msb.Spellcaster) is True and player.com == 'cast':
                             spell = player.cast_spell()
                             if spell == 'cancel':
                                 pass
                             else:
-                                if isinstance(spell, Attack_spell):
+                                if isinstance(spell, spl.Attack_spell):
                                     target = gf.select_target(range_of_p, p_list)
                                     if target in p_list:
                                         print(f'{player.name} attacks {target.name} with {spell.name}!')
-                                        attack_attempt = False
-                                        while attack_attempt is False:
-                                            try:
-                                                atk = int(input(f'{player.atk_message} > ')) + player.casting_mod
-                                                attack_attempt = True
-                                            except ValueError:
-                                                print('Invalid input')
-                                        spell.spell_effect(player, atk, target)
-                                        action -= 1
+                                        if spell.roll_type == 'attack':
+                                            attack_attempt = False
+                                            while attack_attempt is False:
+                                                try:
+                                                    atk = int(input(f'{player.atk_message} > ')) + player.casting_mod
+                                                    attack_attempt = True
+                                                except ValueError:
+                                                    print('Invalid input')
+                                            spell.spell_effect(player, atk, target)
+                                            action -= 1
+                                        elif spell.roll_type == 'save':
+                                            save = gf.saving_throw(target, spell.save_type)
+                                            spell.spell_effect(player, save, target)
+                                            action -= 1
                                         if target.hp < 1:
                                             print(f'{target.name} is dead')
                                             number_of_p -= 1
@@ -147,7 +151,7 @@ Round {round_num}''')
                                 else:
                                     print("You're spell doesn't do damage")
                             player.command()
-                        elif isinstance(player, Spellcaster) is not True and player.com == 'cast':
+                        elif isinstance(player, msb.Spellcaster) is not True and player.com == 'cast':
                             print("You can't cast spells")
                             player.command()
                     else:

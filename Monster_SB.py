@@ -22,6 +22,7 @@ class Combatant:
         self.prof = 2
         self.weapon = weapons.Weapon()
         self.atk_message = 'Roll a d20'
+        self.save_message = ''
         self.spell_message = ''
         self.action = 1
         self.subtle_action = 1
@@ -33,6 +34,7 @@ class Combatant:
         self.name = name
         self.hp = gf.roll_dice(self.hp_num_die, self.hp_d_value) + self.hpmod
         self.initiative = gf.roll_dice(1, 20) + self.DEXmod
+        self.save_message = f'{self.name}, roll a d20'
 
     def reference(self):    # Redefine for spellcasters and players
         print(f'''Player reference:
@@ -98,7 +100,9 @@ class Combatant:
 class Spellcaster(Combatant):
     def __init__(self):
         super().__init__()
+        self.spellpoints = 0
         self.casting_mod = 0
+        self.spell_save_dc = 8 + self.casting_mod
         self.spell_options = []
 
     def cast_spell(self):
@@ -120,7 +124,6 @@ class Spellcaster(Combatant):
                 print("You can't cast that")
                 spell_select = input('Which spell would you like to use > ').lower()
         return spell
-                
 
     def reference(self):
         print(f'''Player reference:
@@ -155,7 +158,9 @@ class Gnoll(Combatant):
         self.ac = 15
         self.temp_acmod = 5
         self.STRmod = 2
+        self.STR_save_mod = 2
         self.DEXmod = 1
+        self.DEX_save_mod = 1
         self.weapon = weapons.Spear()
 
 
@@ -199,5 +204,5 @@ class Acolyte(Spellcaster):
         self.INTmod = 3
         self.weapon = weapons.Dagger()
         self.casting_mod = self.INTmod + self.prof
-        self.spellmessage = ''
-        self.spell_options = ['fireball', 'frostspike', 'acid splash']
+        self.spell_save_dc = 8 + self.casting_mod
+        self.spell_options = ['acid splash', 'chill touch']

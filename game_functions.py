@@ -1,4 +1,4 @@
-import random, Monster_SB, spells, weapons
+import random, Monster_SB as msb
 
 # Important game arrays
 
@@ -15,6 +15,50 @@ def roll_dice(num_dice, d_value):
     return output
 
 
+# Saving throw function
+
+def saving_throw(target, save_type):
+    save_attempt = False
+    while save_attempt is False:
+        if save_type == 'STR':
+            try:
+                save = int(input(f'{target.save_message} > ')) + target.STR_save_mod
+                save_attempt = True
+            except ValueError:
+                pass
+        elif save_type == 'DEX':
+            try:
+                save = int(input(f'{target.save_message} > ')) + target.DEX_save_mod
+                save_attempt = True
+            except ValueError:
+                pass
+        elif save_type == 'CON':
+            try:
+                save = int(input(f'{target.save_message} > ')) + target.CON_save_mod
+                save_attempt = True
+            except ValueError:
+                pass
+        elif save_type == 'INT':
+            try:
+                save = int(input(f'{target.save_message} > ')) + target.INT_save_mod
+                save_attempt = True
+            except ValueError:
+                pass
+        elif save_type == 'WIS':
+            try:
+                save = int(input(f'{target.save_message} > ')) + target.WIS_save_mod
+                save_attempt = True
+            except ValueError:
+                pass
+        elif save_type == 'CHA':
+            try:
+                save = int(input(f'{target.save_message} > ')) + target.CHA_save_mod
+                save_attempt = True
+            except ValueError:
+                pass
+    return save
+
+
 # Establishes combatant types
 
 def create_player(p_list, p_number):
@@ -22,23 +66,23 @@ def create_player(p_list, p_number):
     p_creation_attempt = False
     while p_creation_attempt is False:
         if combatant_type == 'player':
-            p_list[p_number] = Monster_SB.Player()
+            p_list[p_number] = msb.Player()
             p_list[p_number].set_stats(input('Name > '), int(input('HP > ')), int(input('AC > ')))
             p_creation_attempt = True
         elif combatant_type == 'gnoll':
-            p_list[p_number] = Monster_SB.Gnoll()
+            p_list[p_number] = msb.Gnoll()
             p_list[p_number].set_stats(input('Name > '))
             p_creation_attempt = True
         elif combatant_type == 'skeleton':
-            p_list[p_number] = Monster_SB.Skeleton()
+            p_list[p_number] = msb.Skeleton()
             p_list[p_number].set_stats(input('Name > '))
             p_creation_attempt = True
         elif combatant_type == 'zombie':
-            p_list[p_number] = Monster_SB.Zombie()
+            p_list[p_number] = msb.Zombie()
             p_list[p_number].set_stats(input('Name > '))
             p_creation_attempt = True
         elif combatant_type == 'acolyte':
-            p_list[p_number] = Monster_SB.Acolyte()
+            p_list[p_number] = msb.Acolyte()
             p_list[p_number].set_stats(input('Name > '))
             p_creation_attempt = True
         else:
@@ -77,76 +121,3 @@ Names can be found in "Player Names" list at beginning of Round''')
 Type "help" for options''')
             target = input('target > ')
     return target
-
-
-# Collects the spell and determines damage
-def collect_spell_damage(user, spell):
-    spell_select_attempt = False
-    not_enough = False
-    invalid = False
-    while spell_select_attempt is False:
-        if spell == 'acid splash':
-            dmg = spells.acid_splash(user)
-            spell_select_attempt = True
-        elif spell == 'chill touch':
-            dmg = spells.chill_touch(user)
-            spell_select_attempt = True
-        elif spell == 'eldritch blast':
-            dmg = spells.eldritch_blast(user)
-            spell_select_attempt = True
-        elif spell == 'fire_bolt':
-            dmg = spells.fire_bolt(user)
-            spell_select_attempt = True
-        elif spell == 'frostbite':
-            dmg = spells.frostbite(user)
-            spell_select_attempt = True
-        elif spell == 'poison spray':
-            dmg = spells.poison_spray(user)
-            spell_select_attempt = True
-        elif spell == 'ray of frost':
-            dmg = spells.ray_of_frost(user)
-            spell_select_attempt = True
-        elif spell == 'sacred flame':
-            dmg = spells.sacred_flame(user)
-            spell_select_attempt = True
-        elif spell == 'shocking grasp':
-            dmg = spells.shocking_grasp(user)
-            spell_select_attempt = True
-        elif spell == 'thorn whip':
-            dmg = spells.thorn_whip(user)
-            spell_select_attempt = True
-        elif spell == 'fireball':
-            if user.spellpoints >= 2:
-                dmg = spells.fireball(user)
-                spell_select_attempt = True
-            else:
-                print("Not enough spell points")
-                not_enough = True
-                break
-        elif spell == 'frostspike':
-            if user.spellpoints >= 3:
-                dmg = spells.frostspike(user)
-                spell_select_attempt = True
-            else:
-                print("Not enough spell points")
-                not_enough = True
-                break
-        elif spell == 'lightning':
-            if user.spellpoints >= 5:
-                dmg = spells.lightning(user)
-                spell_select_attempt = True
-            else:
-                print("Not enough spell points")
-                not_enough = True
-                break
-        elif spell == 'cancel':
-            dmg = 'cancel'
-            break
-        else:
-            print('Invalid spell')
-            invalid = True
-    if not_enough is True or invalid is True:
-        dmg = 'invalid'
-    else:
-        pass
-    return dmg
