@@ -30,13 +30,24 @@ class Attack_spell(Spell):
 
     def spell_effect(self, user, value, target):
         if self.roll_type == 'attack':
-            if value >= target.ac and value >= target.temp_ac:
-                dmg = self.spell_damage()
+            d_roll = value - user.casting_mod
+            if d_roll == 1:
+                print('Critical FAIL!')
+                print(f'{user.name} missed horribly')
+            elif d_roll == 20:
+                dmg = self.spell_critical()
+                print('Critical Hit!')
                 print(f'{target.name} takes {dmg} {self.dmg_type} damage')
                 target.hp -= dmg
                 print("Ouch!")
             else:
-                print(f'{user.name} missed')
+                if value >= target.ac and value >= target.temp_ac:
+                    dmg = self.spell_damage()
+                    print(f'{target.name} takes {dmg} {self.dmg_type} damage')
+                    target.hp -= dmg
+                    print("Ouch!")
+                else:
+                    print(f'{user.name} missed')
         if self.roll_type == 'save':
             if value < user.spell_save_dc:
                 dmg = self.spell_damage()
@@ -49,6 +60,11 @@ class Attack_spell(Spell):
 
     def spell_damage(self):
         dmg = gf.roll_dice(self.num_die, self.d_value)
+        return dmg
+
+    def spell_critical(self):
+        num_die = self.num_die * 2
+        dmg = gf.roll_dice(num_die, self.d_value)
         return dmg
 
 
@@ -198,4 +214,4 @@ def lightning(user):
 
 # Spell lists
 
-spell_list_as_objects = [Acid_splash(), Chill_touch()]
+spell_list = [Acid_splash(), Chill_touch()]

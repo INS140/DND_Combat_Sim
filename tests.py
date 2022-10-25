@@ -1,29 +1,30 @@
-import game_functions as gf,Monster_SB as msb, spells as spl
+import game_functions as gf,Monster_SB as msb
 
 # To shorten variable size, p = player
 
 # Things left to add:
 #   timer that keeps track of in combat time
-#   upgrade spellcasting action
-#   combat spells
+#   player options function
+#   adapt spellcasting and attack action
+#   combat spells ------ add more
 #   multitargeting
-#   spell descriptions
+#   implement spell descriptions
 #   conditions
 #   bonus action
-#   critcal hits and fails
-#   weapon properties
+#   reactions
+#   critcal hits and fails ------ maybe finished, needs more testing
+#   Net weapon and special property
+#   implement weapon properties ------ In Progress
 #   multiattack
 #   spell levels and point cost
 #   monsters
 #   monster special abilities
 #   spell slots for monsters
-#   add advantage and disadvantage
 #   replace defend with dodge
 #   healing
 #   movement counter???
 #   noncombat spells
 #   passive spell and AoE effects
-#   damage types
 #   resistance/immunity
 #   player stat blocks
 #   player levels
@@ -35,15 +36,9 @@ import game_functions as gf,Monster_SB as msb, spells as spl
 #   party/teams
 #   django framework
 
-
 # This section decides how many players there are and their attributes
-p_list_range_create = False
-while p_list_range_create is False:
-    try:
-        number_of_p = int(input('How many players? > '))
-        p_list_range_create = True
-    except ValueError:
-        print('Invalid input')
+
+number_of_p = gf.player_int_input('How many players? > ')
 
 print(' ')
 range_of_p = range(0, number_of_p)
@@ -73,14 +68,18 @@ round_num = 0
 while number_of_p > 1:
     round_num += 1
     for player in p_list:
-        if player.hp <= 0 or player.run is True:
+        if player.hp <= 0:
             try:
                 p_list_reference_init.remove(player.initiative)
                 p_list_reference_name.remove(player.name)
+                p_list.remove(player)
             except IndexError:
                 pass
             except ValueError:
                 pass
+            number_of_p -= 1
+    if number_of_p == 1:
+            break
     print(f'''
 Initiative: {p_list_reference_init}
 Player Name: {p_list_reference_name}
@@ -100,15 +99,9 @@ Round {round_num}''')
                 if player.com in gf.actions:
                     if action != 0:
                         if player.com == 'atk':
-                            target = gf.select_target(range_of_p, p_list)
-                            if target in p_list:
-                                player.attack(target)
+                            result = player.attack(range_of_p, p_list)
+                            if result == 'success':
                                 action -= 1
-                                if target.hp < 1:
-                                    print(f'{target.name} is dead')
-                                    number_of_p -= 1
-                            elif target == 'cancel':
-                                pass
                             player.command()
                         elif player.com == 'def':
                             player.defend()
@@ -117,39 +110,15 @@ Round {round_num}''')
                         elif player.com == 'run':
                             print(f'{player.name} chickened out ...')
                             player.run = True
-                            number_of_p -= 1
                             turn_finished = True
+                            p_list_reference_init.remove(player.initiative)
+                            p_list_reference_name.remove(player.name)
+                            number_of_p -= 1
                             print('-' * 100)
                         elif isinstance(player, msb.Spellcaster) is True and player.com == 'cast':
-                            spell = player.cast_spell()
-                            if spell == 'cancel':
-                                pass
-                            else:
-                                if isinstance(spell, spl.Attack_spell):
-                                    target = gf.select_target(range_of_p, p_list)
-                                    if target in p_list:
-                                        print(f'{player.name} attacks {target.name} with {spell.name}!')
-                                        if spell.roll_type == 'attack':
-                                            attack_attempt = False
-                                            while attack_attempt is False:
-                                                try:
-                                                    atk = int(input(f'{player.atk_message} > ')) + player.casting_mod
-                                                    attack_attempt = True
-                                                except ValueError:
-                                                    print('Invalid input')
-                                            spell.spell_effect(player, atk, target)
-                                            action -= 1
-                                        elif spell.roll_type == 'save':
-                                            save = gf.saving_throw(target, spell.save_type)
-                                            spell.spell_effect(player, save, target)
-                                            action -= 1
-                                        if target.hp < 1:
-                                            print(f'{target.name} is dead')
-                                            number_of_p -= 1
-                                    elif target == 'cancel':
-                                        pass
-                                else:
-                                    print("You're spell doesn't do damage")
+                            result = player.cast_spell(range_of_p, p_list)
+                            if result == 'success':
+                                action -= 1
                             player.command()
                         elif isinstance(player, msb.Spellcaster) is not True and player.com == 'cast':
                             print("You can't cast spells")
@@ -164,8 +133,6 @@ Round {round_num}''')
                             player.equip_weapon()
                             if weapon != player.weapon:
                                 subtle_action -= 1
-                            else:
-                                pass
                             print(' ')
                             player.command()
                     else:
@@ -191,11 +158,8 @@ Player Options:
     Type "help" for options
                         ''')
                         player.command()
-
-        if number_of_p <= 1:
+        if number_of_p == 1:
             break
-        else:
-            pass
 
 # Decides winner after game ends
 for player in p_list:

@@ -1,17 +1,57 @@
 import random, Monster_SB as msb
 
-# Important game arrays
+# Important game arrays and variables
 
 actions = ['atk', 'cast', 'def', 'run']
 subtle_actions = ['equip']
+roll_message = 'Roll a d20 > '
+
 
 # General dice roller
 
 def roll_dice(num_dice, d_value):
-    output = 0
+    total = 0
     while num_dice > 0:
-        output += random.randint(1, d_value)
+        total += random.randint(1, d_value)
         num_dice -= 1
+    return total
+
+
+# Player inputs
+
+def player_int_input(message):
+    attempt = False
+    while attempt is False:
+        try:
+            player_input = int(input(message))
+            attempt = True
+        except ValueError:
+            print('Invalid input')
+    return player_input
+
+
+# Advantage and Disadvantage
+
+def roll_advantage():
+    print('Roll with advantage')
+    output = 0
+    roll1 = player_int_input(roll_message)
+    roll2 = player_int_input(roll_message)
+    if roll1 > roll2:
+        output = roll1
+    else:
+        output = roll2
+    return output
+
+def roll_disadvantage():
+    print('Roll with disadvantage')
+    output = 0
+    roll1 = player_int_input(roll_message)
+    roll2 = player_int_input(roll_message)
+    if roll1 < roll2:
+        output = roll1
+    else:
+        output = roll2
     return output
 
 

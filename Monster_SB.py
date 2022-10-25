@@ -1,4 +1,5 @@
-import weapons, spells
+from time import sleep
+import weapons as wpn, spells as spl
 import game_functions as gf
 
 class Combatant:
@@ -20,7 +21,7 @@ class Combatant:
         self.DEXmod = 0
         self.INTmod = 0
         self.prof = 2
-        self.weapon = weapons.Weapon()
+        self.weapon = wpn.Weapon()
         self.atk_message = 'Roll a d20'
         self.save_message = ''
         self.spell_message = ''
@@ -49,22 +50,72 @@ class Combatant:
     def command(self):
         self.com = input(f"{self.name}, type a command > ").lower()
 
-    def attack(self, target):
-        print(f'{self.name} attacks {target.name} with a {self.weapon.name}!')
-        attack_attempt = False
-        while attack_attempt is False:
-            try:
-                atk = int(input(f'{self.atk_message} > ')) + self.STRmod + self.prof
-                attack_attempt = True
-            except ValueError:
-                print('Invalid input')
-        if atk >= target.ac and atk >= target.temp_ac:
-            dmg = self.weapon.weapon_damage() + self.STRmod
-            print(f'{target.name} takes {dmg} {self.weapon.dmg_type} damage')
-            target.hp -= dmg
-            print("Ouch!")
-        else:
-            print(f'{self.name} missed')
+    def attack(self, range_of_p, p_list):
+        result = ''
+        weapon_thrown = False
+        target = gf.select_target(range_of_p, p_list)
+        if target in p_list:
+            if 'finesse' in self.weapon.properties: # STR or DEX
+                if self.DEXmod > self.STRmod:
+                    mod = self.DEXmod
+                else:
+                    mod = self.STRmod
+            else:
+                mod = self.STRmod
+            if isinstance(self.weapon, wpn.Ranged) is True: # Ranged weapon attack
+                if isinstance(self.weapon, wpn.Dart) is False:
+                    mod = self.DEXmod
+                d_roll = self.weapon.target_distance()
+                if d_roll == 'cancel':
+                    result = 'cancel'
+                else:
+                    if isinstance(self.weapon, wpn.Dart):
+                        weapon_thrown = True
+            elif self.weapon.thrown is True: # Thrown weapon attack
+                throw = input('Throw the weapon (y/n) > ')
+                if throw == 'y':
+                    d_roll = self.weapon.target_distance()
+                    if d_roll == 'cancel':
+                        result = 'cancel'
+                    else:
+                        weapon_thrown = True
+                elif throw == 'n':
+                    d_roll = gf.player_int_input(gf.roll_message)
+                else:
+                    print('Invalid input')
+            else: # All non-ranged weapons without finesse or thrown
+                d_roll = gf.player_int_input(gf.roll_message)
+            if result != 'cancel':
+                print(f'{self.name} attacks {target.name} with a {self.weapon.name}!')
+                sleep(1)
+                atk = d_roll + mod + self.prof
+                if isinstance(self.weapon, wpn.Unarmed) is True: # Unarmed attack
+                    mod = 0
+                if d_roll == 1: # Critical failure
+                    print('Critical FAIL!')
+                    print(f'{self.name} missed horribly')
+                elif d_roll == 20: # Critical hit
+                    dmg = self.weapon.weapon_critical() + mod
+                    print('Critical Hit!')
+                    print(f'{target.name} takes {dmg} {self.weapon.dmg_type} damage')
+                    target.hp -= dmg
+                    print("Ouch!")
+                else: # Normal weapon attack
+                    if atk >= target.ac and atk >= target.temp_ac: # Attack hit
+                        dmg = self.weapon.weapon_damage() + mod
+                        print(f'{target.name} takes {dmg} {self.weapon.dmg_type} damage')
+                        target.hp -= dmg
+                        print("Ouch!")
+                    else: # Attack missed
+                        print(f'{self.name} missed')
+                if target.hp < 1: # Target was killed by attack
+                    print(f'{target.name} is dead')
+                result = 'success'
+        elif target == 'cancel':
+            result = 'cancel'
+        if weapon_thrown is True: # Removes weapon that has been thrown
+            self.weapon = wpn.Unarmed(self.STRmod)
+        return result
 
     def defend(self):
         print(f'{self.name} prepares for an incoming attack')
@@ -77,10 +128,10 @@ class Combatant:
         new_weapon = input("Equip a new weapon > ").lower()
         weapon_set = False
         while weapon_set is False:
-            if new_weapon in weapons.list_of_weapons:
-                for wpn in weapons.list_of_weapons_as_objects:
-                    if new_weapon == wpn.name:
-                        self.weapon = wpn
+            if new_weapon in wpn.list_of_weapons:
+                for weapon in wpn.list_of_weapons_as_objects:
+                    if new_weapon == weapon.name:
+                        self.weapon = weapon
                         print(f'{self.name} equipped a {new_weapon}!')
                         weapon_set = True
                         break
@@ -88,7 +139,7 @@ class Combatant:
                         pass
             elif new_weapon == 'remove':
                 print(f'{self.name} dropped their weapon!')
-                self.weapon = None
+                self.weapon = wpn.Unarmed(self.STRmod)
                 weapon_set = True
             elif new_weapon == 'cancel':
                 break
@@ -105,12 +156,13 @@ class Spellcaster(Combatant):
         self.spell_save_dc = 8 + self.casting_mod
         self.spell_options = []
 
-    def cast_spell(self):
+    def cast_spell(self, range_of_p, p_list):
         spell_select = input('Which spell would you like to use > ').lower()
         cast_attempt = False
+        result = ''
         while cast_attempt is False:
             if spell_select in self.spell_options:
-                for sp in spells.spell_list_as_objects:
+                for sp in spl.spell_list:
                     if spell_select == sp.reference:
                         spell = sp
                         break
@@ -118,12 +170,35 @@ class Spellcaster(Combatant):
                         pass
                 cast_attempt = True
             elif spell_select == 'cancel':
-                spell = 'cancel'
+                result = 'cancel'
                 break
             else:
                 print("You can't cast that")
                 spell_select = input('Which spell would you like to use > ').lower()
-        return spell
+        if result == 'cancel':
+            pass
+        else:
+            if isinstance(spell, spl.Attack_spell):
+                target = gf.select_target(range_of_p, p_list)
+                if target in p_list:
+                    print(f'{self.name} attacks {target.name} with {spell.name}!')
+                    sleep(1)
+                    if spell.roll_type == 'attack':
+                        d_roll = gf.player_int_input(gf.roll_message)
+                        atk = d_roll + self.casting_mod
+                        spell.spell_effect(self, atk, target)
+                        result = 'success'
+                    elif spell.roll_type == 'save':
+                        save = gf.saving_throw(target, spell.save_type)
+                        spell.spell_effect(self, save, target)
+                        result = 'success'
+                    if target.hp < 1:
+                        print(f'{target.name} is dead')
+                elif target == 'cancel':
+                    result = 'cancel'
+            else:
+                print("You're spell doesn't do damage")
+        return result
 
     def reference(self):
         print(f'''Player reference:
@@ -161,7 +236,7 @@ class Gnoll(Combatant):
         self.STR_save_mod = 2
         self.DEXmod = 1
         self.DEX_save_mod = 1
-        self.weapon = weapons.Spear()
+        self.weapon = wpn.Spear()
 
 
 class Skeleton(Combatant):
@@ -174,7 +249,8 @@ class Skeleton(Combatant):
         self.temp_acmod = 1
         self.STRmod = 0
         self.DEXmod = 2
-        self.weapon = weapons.Shortsword()
+        self.DEX_save_mod = 2
+        self.weapon = wpn.Shortsword()
 
 
 class Zombie(Combatant):
@@ -187,7 +263,7 @@ class Zombie(Combatant):
         self.temp_acmod = 2
         self.STRmod = 1
         self.DEXmod = -2
-        self.weapon = weapons.Unarmed()
+        self.weapon = wpn.Unarmed(self.STRmod)
 
 
 class Acolyte(Spellcaster):
@@ -202,7 +278,7 @@ class Acolyte(Spellcaster):
         self.STRmod = 0
         self.DEXmod = 1
         self.INTmod = 3
-        self.weapon = weapons.Dagger()
+        self.weapon = wpn.Dagger()
         self.casting_mod = self.INTmod + self.prof
         self.spell_save_dc = 8 + self.casting_mod
         self.spell_options = ['acid splash', 'chill touch']
