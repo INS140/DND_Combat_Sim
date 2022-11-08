@@ -1,5 +1,6 @@
 # This is a test of the possible movement tracker
 # If successful this will be implemented into the Combatant class
+# Need to add zone-of-control and overlap testing
 
 # It's looking good so far
 

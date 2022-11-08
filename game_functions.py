@@ -1,11 +1,31 @@
-import random, Monster_SB as msb
+import random, Monster_SB as msb, weapons as wpn, copy
 
 # Important game arrays and variables
 
 actions = ['atk', 'cast', 'def', 'run']
-subtle_actions = ['equip']
+subtle_actions = ['equip'] # More will be added later
 roll_message = 'Roll a d20 > '
+score_to_mod = {1: -5, 2: -4, 3: -4, 4: -3, 5: -3, 6: -2, 7: -2, 8: -1, 9: -1, 10: 0, 11: 0, 12: 1, 13: 1, 14: 2, 15: 2, 16: 3, 17: 3,
+                18: 4, 19: 4, 20: 5, 21: 5, 22: 6, 23: 6, 24: 7, 25: 7, 26: 8, 27: 8, 28: 9, 29: 9, 30: 10}
 
+monster_dict = {
+    'gnoll': msb.Gnoll(),
+    'skeleton': msb.Skeleton(),
+    'zombie': msb.Zombie(),
+    'acolyte': msb.Acolyte()
+}
+monster_list = monster_dict.keys()
+
+weapons_dict = {'club': wpn.Club(), 'dagger': wpn.Dagger(), 'greatclub': wpn.Greatclub(), 'handaxe': wpn.Handaxe(), 'javelin': wpn.Javelin(),
+    'light hammer': wpn.Light_hammer(), 'mace': wpn.Mace(), 'quarterstaff': wpn.Quarterstaff(), 'sickle': wpn.Sickle(), 'spear': wpn.Spear(),
+    'light crossbow': wpn.Crossbow_light(), 'dart': wpn.Dart(), 'shortbow': wpn.Shortbow(), 'sling': wpn.Sling(), 'battleaxe': wpn.Battleaxe(),
+    'flail': wpn.Flail(), 'glaive': wpn.Glaive(), 'greataxe': wpn.Greataxe(), 'greatsword': wpn.Greatsword(), 'halberd': wpn.Halberd(),
+    'lance': wpn.Lance(), 'longsword': wpn.Longsword(), 'maul': wpn. Maul(), 'morningstar': wpn.Morningstar(), 'pike': wpn.Pike(),
+    'rapier': wpn.Rapier(), 'scimitar': wpn.Scimitar(), 'shortsword': wpn.Shortsword(), 'trident': wpn.Trident(), 'war pick': wpn.War_pick(),
+    'warhammer': wpn.Warhammer(), 'whip': wpn.Whip(), 'blowgun': wpn.Blowgun(), 'hand crossbow': wpn.Crossbow_hand(), 'heavy crossbow': wpn.Crossbow_heavy(),
+    'longbow': wpn.Longbow(), 'net': wpn.Net()
+}
+weapons_list = weapons_dict.keys()
 
 # General dice roller
 
@@ -26,7 +46,7 @@ def player_int_input(message):
             player_input = int(input(message))
             attempt = True
         except ValueError:
-            print('Invalid input')
+            print('Invalid input\n')
     return player_input
 
 
@@ -99,38 +119,28 @@ def saving_throw(target, save_type):
     return save
 
 
-# Establishes combatant types
+# Functions for assigning variables to classes
 
-def create_player(p_list, p_number):
-    combatant_type = input('Combatant type > ').lower()
-    p_creation_attempt = False
-    while p_creation_attempt is False:
-        if combatant_type == 'player':
-            p_list[p_number] = msb.Player()
-            p_list[p_number].set_stats(input('Name > '), int(input('HP > ')), int(input('AC > ')))
-            p_creation_attempt = True
-        elif combatant_type == 'gnoll':
-            p_list[p_number] = msb.Gnoll()
-            p_list[p_number].set_stats(input('Name > '))
-            p_creation_attempt = True
-        elif combatant_type == 'skeleton':
-            p_list[p_number] = msb.Skeleton()
-            p_list[p_number].set_stats(input('Name > '))
-            p_creation_attempt = True
-        elif combatant_type == 'zombie':
-            p_list[p_number] = msb.Zombie()
-            p_list[p_number].set_stats(input('Name > '))
-            p_creation_attempt = True
-        elif combatant_type == 'acolyte':
-            p_list[p_number] = msb.Acolyte()
-            p_list[p_number].set_stats(input('Name > '))
-            p_creation_attempt = True
-        else:
-            print('''
-Invalid monster type
-            ''')
-            combatant_type = input('Monster type > ').lower()
-    print(' ')
+def create_player(range_of_p):
+    p_list = []
+    for p_number in range_of_p:
+        p_list.append(p_number)
+        monster_dict_copy = copy.deepcopy(monster_dict)
+        while True:
+            combatant_type = input('Combatant type > ').lower()
+            if combatant_type in monster_list:
+                p_list[p_number] = monster_dict_copy.get(combatant_type)
+                p_list[p_number].set_stats(input('Name > '))
+                print(' ')
+                break
+            else:
+                print('Invalid monster type\n')
+    return p_list
+
+def assign_weapon(weapon):
+    weapons_dict_copy = copy.deepcopy(weapons_dict)
+    weapon = weapons_dict_copy.get(weapon)
+    return weapon
 
 
 # Targetting functions

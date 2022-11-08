@@ -137,7 +137,6 @@ class Crossbow_light(Ranged):
         self.d_value = 8
         self.properties = ['loading', 'two-handed']
 
-
 class Dart(Ranged):
     def __init__(self):
         super().__init__()
@@ -300,7 +299,7 @@ class Whip(Melee):
         self.dmg_type = 'slashing'
         self.properties = ['finesse', 'reach']
 
-# Martial ranged weapons - net, no damage so it's useless atm
+# Martial ranged weapons
 
 class Blowgun(Ranged):
     def __init__(self):
@@ -337,12 +336,15 @@ class Longbow(Ranged):
         self.long_range = 600
         self.properties = ['heavy', 'two-handed']
 
+class Net(Ranged): # No damage so useless atm, will develop later
+    pass
 
 # Unarmed and special weapons
 
 class Unarmed(Melee):
     def __init__(self, mod):
         super().__init__()
+        self.name = 'unarmed'
         self.dmg = mod
         self.dmg_type = 'bludgeoning'
 
@@ -361,14 +363,14 @@ class Unarmed(Melee):
         dmg *= 2
         return dmg
 
+
+class Shield:
+    def __init__(self):
+        self.name = 'shield'
+
 # Important weapon lists
 
 list_of_weapons = ['club', 'dagger', 'greatclub', 'handaxe', 'javelin', 'light hammer', 'mace', 'quarterstaff', 'sickle',
     'spear', 'light crossbow', 'dart', 'shortbow', 'sling', 'battleaxe', 'flail', 'glaive', 'greataxe', 'greatsword',
     'halberd', 'lance', 'longsword', 'maul', 'morningstar', 'pike', 'rapier', 'scimitar', 'shortsword', 'trident',
     'war pick', 'warhammer', 'whip', 'blowgun', 'hand crossbow', 'heavy crossbow', 'longbow']
-
-
-list_of_weapons_as_objects = [Club(), Dagger(), Greatclub(), Handaxe(), Javelin(), Light_hammer(), Mace(), Quarterstaff(), Sickle(), Spear(), Crossbow_light(),
-    Dart(), Shortbow(), Sling(), Battleaxe(), Flail(), Glaive(), Greataxe(), Greatsword(), Halberd(), Lance(), Longsword(), Maul(), Morningstar(), Pike(), Rapier(),
-    Scimitar(), Shortsword(), Trident(), War_pick(), Warhammer(), Whip(), Blowgun(), Crossbow_hand(), Crossbow_heavy(), Longbow()]
